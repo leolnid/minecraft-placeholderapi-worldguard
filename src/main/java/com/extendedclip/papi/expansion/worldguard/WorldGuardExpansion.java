@@ -28,10 +28,12 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.codemc.worldguardwrapper.WorldGuardWrapper;
+import org.codemc.worldguardwrapper.flag.IWrappedFlag;
 import org.codemc.worldguardwrapper.region.IWrappedRegion;
 import org.codemc.worldguardwrapper.selection.ICuboidSelection;
 
 import java.util.*;
+
 import static java.util.stream.Collectors.toMap;
 
 public class WorldGuardExpansion extends PlaceholderExpansion {
@@ -195,6 +197,19 @@ public class WorldGuardExpansion extends PlaceholderExpansion {
             }
         }
 
+        if (params.startsWith("region_flag_")) {
+            String name = params.replaceFirst("region_flag_", "");
+            Optional<IWrappedFlag<?>> flag = region.getFlags()
+                    .keySet()
+                    .stream()
+                    .filter(iWrappedFlag -> Objects.equals(iWrappedFlag.getName(), name))
+                    .findFirst();
+
+            Object o = region.getFlag(flag.orElseThrow()).orElseThrow();
+            if (o instanceof Optional) o = ((Optional<?>) o).orElseThrow();
+            if (o instanceof Optional) o = ((Optional<?>) o).orElseThrow();
+            return String.valueOf(o);
+        }
         return null;
     }
 
@@ -202,7 +217,6 @@ public class WorldGuardExpansion extends PlaceholderExpansion {
      * Get a wrapped region from a location.
      *
      * @param location The location to check
-     *
      * @return The wrapped region
      */
     private IWrappedRegion getRegion(Location location, int priority) {
@@ -211,7 +225,7 @@ public class WorldGuardExpansion extends PlaceholderExpansion {
         }
         try {
             Map<String, Integer> regions = worldguard.getRegions(location).stream().sorted(
-                    Comparator.comparingInt(IWrappedRegion::getPriority).reversed())
+                            Comparator.comparingInt(IWrappedRegion::getPriority).reversed())
                     .collect(toMap(IWrappedRegion::getId, IWrappedRegion::getPriority, (v1, v2) -> v2, LinkedHashMap::new));
 
             Optional<IWrappedRegion> region = worldguard.getRegion(location.getWorld(), regions.keySet().toArray(new String[0])[priority - 1]);
